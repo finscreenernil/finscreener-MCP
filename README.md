@@ -59,7 +59,7 @@ Add to your Claude Desktop config:
       "command": "uv",
       "args": [
         "--directory",
-        "/path/to/FinscreenerBackend/mcp_server",
+        "/path/to/mcp_server",
         "run",
         "server.py"
       ],
