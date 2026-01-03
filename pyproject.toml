@@ -3,6 +3,9 @@ name = "finscreener-mcp"
 version = "0.1.0"
 description = "MCP server for Finscreener API - Access company, director, GST data from any AI agent"
 readme = "README.md"
+authors = [
+    {name = "Nilesh Bambha", email = "info@finscreener.in"}
+]
 requires-python = ">=3.10"
 dependencies = [
     "mcp[cli]>=1.0.0",
