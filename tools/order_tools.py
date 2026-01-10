@@ -2,11 +2,27 @@
 
 These tools use the Developer API order endpoints for managing orders.
 Returns raw JSON for Claude to process.
+
+Order Types:
+- company: Company contact data (1 credit)
+- director: Director contact data (1 credit)
+- gst: GST registration contact data (1 credit)
+- fullcompany: Full company data with all directors and GST (5 credits)
 """
 
 import json
 from typing import Optional, List
 from mcp_server.api_client import client
+
+# Credit pricing per order type
+CREDIT_PRICES = {
+    "company": 1,
+    "director": 1,
+    "gst": 1,
+    "fullcompany": 5
+}
+
+VALID_ORDER_TYPES = ["company", "director", "gst", "fullcompany"]
 
 
 async def list_orders(
@@ -43,6 +59,8 @@ async def create_order(
         order_name: Name/description for this order
         payment_option: "credits" or "cashfree"
         items: List of items with type, name, number, price
+               Types: company (1 credit), director (1 credit), gst (1 credit), fullcompany (5 credits)
+               For fullcompany: Returns company + all directors + GST data
     """
     if payment_option not in ["credits", "cashfree"]:
         return json.dumps({"error": f"Invalid payment_option '{payment_option}'. Must be 'credits' or 'cashfree'."})
@@ -52,16 +70,20 @@ async def create_order(
 
     validated_items = []
     for i, item in enumerate(items):
-        if not item.get("type") or item["type"] not in ["company", "director", "gst"]:
-            return json.dumps({"error": f"Item {i+1} has invalid type. Must be 'company', 'director', or 'gst'."})
+        item_type = item.get("type")
+        if not item_type or item_type not in VALID_ORDER_TYPES:
+            return json.dumps({"error": f"Item {i+1} has invalid type '{item_type}'. Must be one of: {VALID_ORDER_TYPES}"})
         if not item.get("number"):
             return json.dumps({"error": f"Item {i+1} is missing 'number' (CIN/DIN/GSTIN)."})
 
+        # Use correct credit price for the type
+        price = CREDIT_PRICES.get(item_type, 1)
+
         validated_items.append({
-            "type": item["type"],
+            "type": item_type,
             "name": item.get("name", item["number"]),
             "number": item["number"],
-            "price": float(item.get("price", 10))
+            "price": float(item.get("price", price))
         })
 
     payload = {

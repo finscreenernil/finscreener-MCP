@@ -70,6 +70,11 @@ from mcp_server.tools.classification_tools import (
     lookup_hsn_code as _lookup_hsn_code,
     lookup_sac_code as _lookup_sac_code,
 )
+from mcp_server.tools.crm_tools import (
+    list_crm_orders as _list_crm_orders,
+    get_order_leads as _get_order_leads,
+    get_entity_as_lead as _get_entity_as_lead,
+)
 
 
 # ============================================================================
@@ -394,11 +399,17 @@ async def create_order(
     items: List[dict]
 ) -> str:
     """Create a new order for contacts/registrations.
-    
+
+    Order Types & Credit Pricing:
+    - company: Company contact data (1 credit)
+    - director: Director contact data (1 credit)
+    - gst: GST registration contact data (1 credit)
+    - fullcompany: Full company + all directors + GST (5 credits)
+
     Args:
         order_name: Name describing the order
         payment_option: "credits" or "paylater"
-        items: List of items with "type" (company/director/gst), "name", and "number" (CIN/DIN/GSTIN)
+        items: List of items with "type", "name", and "number" (CIN/DIN/GSTIN)
     """
     return await _create_order(order_name, payment_option, items)
 
@@ -423,6 +434,66 @@ async def watchlist_to_order(
 async def get_user_credits() -> str:
     """Check user's credit balance. Call this before creating orders with credits."""
     return await _get_user_credits()
+
+
+# ============================================================================
+# CRM Integration Tools
+# ============================================================================
+
+@mcp.tool()
+async def list_crm_orders(
+    page: int = 1,
+    limit: int = 20
+) -> str:
+    """List orders available for CRM integration (Zoho export).
+
+    Returns orders that can be exported as Zoho-ready leads.
+
+    Args:
+        page: Page number (default 1)
+        limit: Orders per page (default 20, max 100)
+    """
+    return await _list_crm_orders(page, limit)
+
+
+@mcp.tool()
+async def get_order_leads(order_id: str) -> str:
+    """Get order items as Zoho-ready leads for CRM import.
+
+    Returns enriched lead data with:
+    - For company/director/gst: 'lead' (Zoho format) and 'full_data'
+    - For fullcompany: Flattened data with 'directors' and 'gst' arrays
+
+    Directors include email and mobile from contact data.
+    Order must be paid to access lead data.
+
+    Args:
+        order_id: ID of the order to get leads for
+    """
+    return await _get_order_leads(order_id)
+
+
+@mcp.tool()
+async def get_entity_as_lead(
+    entity_type: str,
+    identifier: str
+) -> str:
+    """Preview an entity as Zoho-ready lead format.
+
+    Use this to see how an entity will appear as a Zoho lead
+    before creating an order.
+
+    Entity Types:
+    - company: Company data (requires CIN)
+    - director: Director data (requires DIN)
+    - gst: GST registration data (requires GSTIN)
+    - fullcompany: Company + all directors + GST (requires CIN)
+
+    Args:
+        entity_type: "company", "director", "gst", or "fullcompany"
+        identifier: CIN, DIN, or GSTIN
+    """
+    return await _get_entity_as_lead(entity_type, identifier)
 
 
 # ============================================================================

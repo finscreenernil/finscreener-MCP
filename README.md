@@ -114,10 +114,29 @@ Restart Claude Desktop after updating the config.
 | Tool | Description |
 |------|-------------|
 | `list_orders` | List your orders |
-| `create_order` | Create a new order |
+| `create_order` | Create a new order (supports fullcompany type) |
 | `get_order_details` | Get order details with contact data |
 | `watchlist_to_order` | Create order from watchlist |
 | `get_user_credits` | Check your credit balance |
+
+**Order Types & Credit Pricing:**
+| Type | Credits | Description |
+|------|---------|-------------|
+| `company` | 1 | Company contact data |
+| `director` | 1 | Director contact data |
+| `gst` | 1 | GST registration contact data |
+| `fullcompany` | 5 | Full company + all directors + GST data |
+
+### CRM Integration Tools
+| Tool | Description |
+|------|-------------|
+| `list_crm_orders` | List orders for CRM/Zoho export |
+| `get_order_leads` | Get order items as Zoho-ready leads |
+| `get_entity_as_lead` | Preview entity as Zoho lead format |
+
+**CRM Lead Format:**
+- For `company`, `director`, `gst`: Returns `lead` (Zoho format) + `full_data`
+- For `fullcompany`: Flattened data with `directors[]` and `gst` arrays, including email/mobile
 
 ### Classification Tools
 | Tool | Description |
@@ -231,6 +250,10 @@ All tools use the Developer API (`/api/` prefix):
 | `GET/POST/PUT/DELETE /api/screener/screeners` | Screener CRUD operations |
 | `GET/POST /api/orders` | Order management |
 | `GET /api/orders/{id}` | Get order details with contact data |
+| `GET /api/orders/{id}/export` | Export order as JSON/CSV |
+| `GET /api/crm/orders` | List orders for CRM integration |
+| `GET /api/crm/orders/{id}/leads` | Get order as Zoho-ready leads |
+| `POST /api/crm/newlead` | Get entity as Zoho lead format |
 | `GET /api/reference/nic` | NIC code lookup |
 | `GET /api/reference/hsn` | HSN code lookup |
 | `GET /api/reference/sac` | SAC code lookup |
